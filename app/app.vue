@@ -7,12 +7,12 @@
       <UCard variant="subtle">
         <div class="space-y-8">
           <div class="header">
-            <h1 class="font-bold text-2xl">One more step</h1>
+            <h1 class="font-medium text-2xl">One more step</h1>
             <p class="text-muted">Please complete the security check to access NetworkSolutions.com</p>
           </div>
           <NuxtTurnstile v-model="token" :options="{callback: () => (isValidated = true)}" />
           <div class="footer">
-            <h2 class="font-bold text-xl">Why do you have to complete a CAPTCHA?</h2>
+            <h2 class="font-medium text-xl">Why do you have to complete a CAPTCHA?</h2>
             <p class="text-muted">Completing the captcha proves you are human and gives you access to the web property.</p>
           </div>
         </div>
