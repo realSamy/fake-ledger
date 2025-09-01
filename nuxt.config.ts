@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
-  modules: ['@nuxt/ui', '@compodium/nuxt', 'nuxt-lottie'],
+  modules: ['@nuxt/ui', '@compodium/nuxt', 'nuxt-lottie', '@nuxtjs/turnstile'],
   css: ['~/assets/css/main.css'],
   ssr: false,
   colorMode: false,
@@ -14,5 +14,9 @@ export default defineNuxtConfig({
     server: {
       allowedHosts: ['localhost', '127.0.0.1', '5a34d83b5cff.ngrok-free.app'],
     }
+  },
+  turnstile: {
+    siteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY,
+    addValidateEndpoint: true,
   }
 })

