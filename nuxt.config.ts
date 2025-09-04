@@ -1,14 +1,21 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
-  modules: ['@nuxt/ui', '@compodium/nuxt', 'nuxt-lottie', '@nuxtjs/turnstile'],
+  devtools: { enabled: import.meta.dev },
+  modules: [
+    '@nuxt/ui',
+    'nuxt-lottie',
+    '@nuxtjs/turnstile',
+    '@nuxtjs/color-mode'
+  ],
   css: ['~/assets/css/main.css'],
   ssr: false,
-  colorMode: false,
+  colorMode: {
+    preference: 'dark',
+  },
   lottie: {
-    componentName: 'Lottie', // Optional: Customize the component name
-    lottieFolder: '/assets/lottie' // Optional: Customize the Lottie folder path
+    componentName: 'Lottie',
+    lottieFolder: '/assets/lottie'
   },
   vite: {
     server: {
@@ -18,5 +25,18 @@ export default defineNuxtConfig({
   turnstile: {
     siteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY,
     addValidateEndpoint: true,
+  },
+  app: {
+    head: {
+      htmlAttrs: {
+        class: 'dark max-w-screen overflow-x-hidden',
+      },
+      bodyAttrs: {
+        class: 'w-screen h-screen md:overflow-hidden flex flex-col'
+      }
+    },
+    rootAttrs: {
+      class: 'flex flex-col grow',
+    }
   }
 })
