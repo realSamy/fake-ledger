@@ -32,8 +32,11 @@ export default defineNuxtConfig({
         class: 'dark max-w-screen overflow-x-hidden',
       },
       bodyAttrs: {
-        class: 'w-screen h-screen md:overflow-hidden flex flex-col'
-      }
+        class: 'w-screen h-dvh md:overflow-hidden flex flex-col'
+      },
+      meta: [
+        {name: 'viewport', content: 'width=device-width, height=device-height, initial-scale=1'},
+      ]
     },
     rootAttrs: {
       class: 'flex flex-col grow',

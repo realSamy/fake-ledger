@@ -1,6 +1,6 @@
 <template>
   <div v-if="!isValidated">
-    <div class="w-screen relative h-screen grow flex justify-center items-center">
+    <div class="w-screen relative h-dvh grow flex justify-center items-center">
       <div class="absolute size-50 top-20">
         <img src="/img/logo-light.svg" alt="Logo" draggable="false">
       </div>
@@ -447,7 +447,7 @@ const isPrevDisabled = computed(() => step.value == 0)
     }
 
     .footer {
-      @apply flex justify-between;
+      @apply flex justify-between sticky bottom-2;
 
       .nav-button {
         @apply rounded-full border px-6 py-2 cursor-pointer;
@@ -455,4 +455,5 @@ const isPrevDisabled = computed(() => step.value == 0)
     }
   }
 }
+
 </style>
